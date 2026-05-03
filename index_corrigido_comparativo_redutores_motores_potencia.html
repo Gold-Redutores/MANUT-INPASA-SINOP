@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>INPASA Parada SINOP | Comparativo Redutores e Motores</title>
+  <link rel="icon" href="data:," />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root {
+      --bg-color:#0f172a;
+      --primary:#3b82f6;
+      --secondary:#10b981;
+      --accent:#f59e0b;
+      --danger:#ef4444;
+      --text:#f8fafc;
+      --text-muted:#94a3b8;
+      --border:#334155;
+      --radius:16px;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      font-family:'Outfit',sans-serif;
+      background-color:var(--bg-color);
+      color:var(--text);
+      min-height:100vh;
+      background-image:
+        radial-gradient(circle at 15% 50%, rgba(59,130,246,.15) 0%, transparent 50%),
+        radial-gradient(circle at 85% 30%, rgba(16,185,129,.15) 0%, transparent 50%);
+      background-attachment:fixed;
+    }
+
+    header {
+      padding:2rem 5%;
+      border-bottom:1px solid var(--border);
+      background:rgba(15,23,42,.88);
+      display:grid;
+      grid-template-columns:1fr auto 1fr;
+      align-items:center;
+      gap:1rem;
+    }
+
+    .logo-area { text-align:center; }
+    .logo-area h1 {
+      font-family:'Space Grotesk',sans-serif;
+      font-size:2.2rem;
+      background:linear-gradient(135deg,#60a5fa,#a78bfa);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+    }
+    .logo-area p { color:var(--text-muted); margin-top:6px; }
+
+    .brand-logo {
+      justify-self:end;
+      max-height:70px;
+      background:rgba(255,255,255,.96);
+      padding:8px 14px;
+      border-radius:12px;
+      box-shadow:0 8px 24px rgba(0,0,0,.2);
+    }
+
+    .stats {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:1.5rem;
+      padding:2rem 5%;
+    }
+
+    .stat-card {
+      background:rgba(30,41,59,.65);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:1.5rem;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .stat-card::before {
+      content:"";
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:4px;
+    }
+
+    .stat-card:nth-child(1)::before { background:var(--primary); }
+    .stat-card:nth-child(2)::before { background:var(--secondary); }
+    .stat-card:nth-child(3)::before { background:var(--accent); }
+    .stat-card:nth-child(4)::before { background:var(--danger); }
+
+    .stat-title {
+      color:var(--text-muted);
+      text-transform:uppercase;
+      font-size:.9rem;
+      letter-spacing:1px;
+      margin-bottom:.5rem;
+    }
+
+    .stat-value {
+      font-family:'Space Grotesk',sans-serif;
+      font-size:2.5rem;
+      font-weight:700;
+    }
+
+    main { padding:0 5% 3rem; }
+
+    .controls {
+      display:flex;
+      gap:1rem;
+      margin-bottom:1.5rem;
+      flex-wrap:wrap;
+    }
+
+    .search-bar { flex:1; min-width:280px; }
+
+    input, select {
+      width:100%;
+      padding:1rem 1.5rem;
+      border-radius:30px;
+      border:1px solid var(--border);
+      background:rgba(30,41,59,.8);
+      color:var(--text);
+      font-family:inherit;
+      font-size:1rem;
+      outline:none;
+    }
+
+    select { width:auto; min-width:190px; cursor:pointer; }
+
+    .table-container {
+      background:rgba(30,41,59,.65);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      overflow-x:auto;
+    }
+
+    table {
+      width:100%;
+      border-collapse:collapse;
+      min-width:950px;
+      text-align:left;
+    }
+
+    th {
+      background:rgba(15,23,42,.95);
+      padding:1rem 1.25rem;
+      color:#b7d5ff;
+      text-transform:uppercase;
+      font-size:.85rem;
+      letter-spacing:1px;
+      border-bottom:1px solid var(--border);
+    }
+
+    td {
+      padding:1rem 1.25rem;
+      border-bottom:1px solid rgba(51,65,85,.5);
+      vertical-align:middle;
+    }
+
+    tr:hover td { background:rgba(255,255,255,.03); }
+
+    .badge {
+      display:inline-block;
+      padding:.4rem .8rem;
+      border-radius:20px;
+      font-size:.85rem;
+      font-weight:700;
+      white-space:nowrap;
+    }
+
+    .tipo-me { background:rgba(59,130,246,.12); color:#93c5fd; border:1px solid rgba(59,130,246,.35); }
+    .tipo-re { background:rgba(16,185,129,.12); color:#6ee7b7; border:1px solid rgba(16,185,129,.35); }
+    .tipo-vrl, .tipo-vlr { background:rgba(245,158,11,.12); color:#fbbf24; border:1px solid rgba(245,158,11,.35); }
+
+    .pot-vazia { color:#fca5a5; font-style:italic; }
+    .check-wrap { display:flex; justify-content:center; align-items:center; }
+    .os-check { width:18px; height:18px; accent-color:#10b981; cursor:pointer; }
+
+    .footer-info {
+      color:var(--text-muted);
+      text-align:right;
+      margin:.9rem 0 0;
+    }
+
+    #no-results, #load-error {
+      display:none;
+      text-align:center;
+      padding:3rem;
+      color:var(--text-muted);
+    }
+
+    #load-error {
+      color:#fca5a5;
+    }
+
+    @media (max-width:900px) {
+      header { grid-template-columns:1fr; }
+      .brand-logo { justify-self:center; }
+      select { width:100%; }
+      .controls { flex-direction:column; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div></div>
+    <div class="logo-area">
+      <h1>INPASA Parada SINOP</h1>
+      <p>Comparativo Redutores e Motores</p>
+    </div>
+    <div>
+      <img class="brand-logo" src="GOLD REDUTORES.JPG" alt="Gold Redutores">
+    </div>
+  </header>
+
+  <section class="stats">
+    <div class="stat-card">
+      <div class="stat-title">Total de registros</div>
+      <div class="stat-value" id="totalRegistros">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Motores ME</div>
+      <div class="stat-value" id="totalME">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Redutores RE</div>
+      <div class="stat-value" id="totalRE">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Redutores VRL/VLR</div>
+      <div class="stat-value" id="totalVRL">0</div>
+    </div>
+  </section>
+
+  <main>
+    <div class="controls">
+      <input class="search-bar" id="searchInput" type="text" placeholder="Pesquisar por tipo, tag, descrição ou potência..." />
+      <select id="tipoFilter">
+        <option value="TODOS">Tipo: Todos</option>
+        <option value="ME">Tipo: ME</option>
+        <option value="RE">Tipo: RE</option>
+        <option value="VRL">Tipo: VRL/VLR</option>
+      </select>
+      <select id="potFilter">
+        <option value="TODOS">Potência: Todas</option>
+        <option value="COM">Com potência</option>
+        <option value="SEM">Sem potência</option>
+      </select>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Tag</th>
+            <th>Descrição do equipamento</th>
+            <th>Potência HP</th>
+            <th>OS Executada</th>
+          </tr>
+        </thead>
+        <tbody id="equipTable"></tbody>
+      </table>
+      <div id="no-results">Nenhum equipamento encontrado para o filtro selecionado.</div>
+      <div id="load-error">Não foi possível carregar a planilha. Confira se o arquivo <b>comparativo_redutores_motores_potencia.xlsx</b> está na mesma pasta do index.html no GitHub.</div>
+    </div>
+
+    <div class="footer-info" id="contadorFiltro"></div>
+  </main>
+
+  <script>
+    const EXCEL_FILE = "comparativo_redutores_motores_potencia.xlsx";
+    const STORAGE_KEY = "inpasa_os_executada_comparativo_v1";
+
+    let equipamentos = [];
+    let osExecutadas = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+
+    function normalizeText(value) {
+      return String(value ?? "")
+        .trim()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toUpperCase();
+    }
+
+    function getColumn(row, possibleNames) {
+      const keys = Object.keys(row);
+      for (const desired of possibleNames) {
+        const found = keys.find(k => normalizeText(k) === normalizeText(desired));
+        if (found) return row[found];
+      }
+      return "";
+    }
+
+    function normalizeTipo(tipo) {
+      const t = normalizeText(tipo).replace(/[^A-Z]/g, "");
+      if (t === "VLR") return "VRL";
+      if (t === "VRL") return "VRL";
+      if (t === "RE") return "RE";
+      if (t === "ME") return "ME";
+      return t || "";
+    }
+
+    function normalizeTag(tag) {
+      return String(tag ?? "")
+        .trim()
+        .toUpperCase()
+        .replace(/^ME[-\s]*/,"")
+        .replace(/^RE[-\s]*/,"")
+        .replace(/^VRL[-\s]*/,"")
+        .replace(/^VLR[-\s]*/,"")
+        .replace(/\s+/g,"");
+    }
+
+    function formatPotencia(value) {
+      const raw = String(value ?? "").trim();
+      if (!raw) return "";
+      return raw.replace(".", ",").replace(/\s*HP$/i, "");
+    }
+
+    function rowId(item) {
+      return `${item.tipo}-${item.tag}`;
+    }
+
+    async function carregarExcel() {
+      try {
+        const response = await fetch(EXCEL_FILE, { cache: "no-store" });
+        if (!response.ok) throw new Error("Arquivo Excel não encontrado.");
+
+        const buffer = await response.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: "array" });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+
+        equipamentos = rows.map(row => {
+          const tipo = normalizeTipo(getColumn(row, ["TIPO", "TIPO TAG", "PREFIXO"]));
+          const tag = normalizeTag(getColumn(row, ["TAG", "TAG GERAL", "CTE"]));
+          const descricao = String(getColumn(row, [
+            "DESCRIÇÃO DO EQUIPAMENTO",
+            "DESCRICAO DO EQUIPAMENTO",
+            "DESCRIÇÃO",
+            "DESCRICAO",
+            "NOME DO EQUIPAMENTO",
+            "DESCRIÇÃO DA TAG",
+            "DESCRICAO DA TAG"
+          ]) ?? "").trim();
+          const potencia = formatPotencia(getColumn(row, [
+            "POTÊNCIA HP",
+            "POTENCIA HP",
+            "POTÊNCIA",
+            "POTENCIA",
+            "HP"
+          ]));
+
+          return { tipo, tag, descricao, potencia };
+        }).filter(item => item.tipo && item.tag);
+
+        atualizarStats();
+        renderTabela();
+      } catch (error) {
+        console.error(error);
+        document.getElementById("load-error").style.display = "block";
+      }
+    }
+
+    function atualizarStats() {
+      document.getElementById("totalRegistros").textContent = equipamentos.length;
+      document.getElementById("totalME").textContent = equipamentos.filter(e => e.tipo === "ME").length;
+      document.getElementById("totalRE").textContent = equipamentos.filter(e => e.tipo === "RE").length;
+      document.getElementById("totalVRL").textContent = equipamentos.filter(e => e.tipo === "VRL").length;
+    }
+
+    function renderTabela() {
+      const search = normalizeText(document.getElementById("searchInput").value);
+      const tipoFiltro = document.getElementById("tipoFilter").value;
+      const potFiltro = document.getElementById("potFilter").value;
+
+      let filtrados = equipamentos.filter(item => {
+        const texto = normalizeText(`${item.tipo} ${item.tag} ${item.descricao} ${item.potencia}`);
+        const matchSearch = !search || texto.includes(search);
+        const matchTipo = tipoFiltro === "TODOS" || item.tipo === tipoFiltro;
+        const matchPot =
+          potFiltro === "TODOS" ||
+          (potFiltro === "COM" && item.potencia) ||
+          (potFiltro === "SEM" && !item.potencia);
+
+        return matchSearch && matchTipo && matchPot;
+      });
+
+      filtrados.sort((a,b) => {
+        const tipoOrder = { ME:1, RE:2, VRL:3 };
+        return (tipoOrder[a.tipo] || 9) - (tipoOrder[b.tipo] || 9) || a.tag.localeCompare(b.tag, "pt-BR", { numeric:true });
+      });
+
+      const tbody = document.getElementById("equipTable");
+      tbody.innerHTML = filtrados.map(item => {
+        const id = rowId(item);
+        const checked = osExecutadas[id] ? "checked" : "";
+        const tipoClass = item.tipo === "ME" ? "tipo-me" : item.tipo === "RE" ? "tipo-re" : "tipo-vrl";
+        const potenciaHtml = item.potencia ? `${item.potencia} HP` : `<span class="pot-vazia"> </span>`;
+
+        return `
+          <tr>
+            <td><span class="badge ${tipoClass}">${item.tipo}</span></td>
+            <td><span class="badge ${tipoClass}">${item.tipo}-${item.tag}</span></td>
+            <td>${item.descricao}</td>
+            <td>${potenciaHtml}</td>
+            <td>
+              <div class="check-wrap">
+                <input class="os-check" type="checkbox" data-id="${id}" ${checked}>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      document.getElementById("no-results").style.display = filtrados.length ? "none" : "block";
+      document.getElementById("contadorFiltro").textContent = `${filtrados.length} registro(s) exibido(s)`;
+
+      document.querySelectorAll(".os-check").forEach(check => {
+        check.addEventListener("change", e => {
+          osExecutadas[e.target.dataset.id] = e.target.checked;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(osExecutadas));
+        });
+      });
+    }
+
+    document.getElementById("searchInput").addEventListener("input", renderTabela);
+    document.getElementById("tipoFilter").addEventListener("change", renderTabela);
+    document.getElementById("potFilter").addEventListener("change", renderTabela);
+
+    carregarExcel();
+  </script>
+</body>
+</html>
